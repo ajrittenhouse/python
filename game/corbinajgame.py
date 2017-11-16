@@ -11,6 +11,9 @@ def createWindow():
 
 	done = False
 
+	menu_displayed = False
+	restart = False
+
 	loc_x = int(PLAY_AREA_WIDTH/2)
 	loc_y = int(PLAY_AREA_HEIGHT/2)
 
@@ -27,6 +30,10 @@ def createWindow():
 #============= Main Loop =============#
 
 	while not done:
+
+		if not menu_displayed:  
+			mainMenu(screen)
+			menu_displayed = True
 
 		grid = createGrid(screen) #Create the grid
 
@@ -45,7 +52,7 @@ def createWindow():
 		x = grid[loc_x][0]*CELL_SIZE+3 #Locations of person
 		y = grid[loc_y][1]*CELL_SIZE+3 #Allows to use grid coords instead of pixels
 		
-		person_loc = (x, y) #initial person location
+		person_loc = (x, y)
 
 		movePerson(screen, person_loc, food_loc, boost1_loc) #Orig. person spawn
 
@@ -68,7 +75,11 @@ def createWindow():
 		updateScore(screen, score_num)
 
 		time_passed += FOOD_EAT_SPEED #Higher number = faster health depreciation
-		health = updateHealth(screen, time_passed)
+		restart = updateHealth(screen, time_passed, restart)
+
+		if restart == True:
+			menu_displayed = False
+				
 
 #============= EVENT HANDLING =============#
 
@@ -89,6 +100,51 @@ def createWindow():
 				elif event.key == pygame.K_DOWN:
 					if 1:
 						loc_y += 1
+
+def mainMenu(screen):
+
+	#mouse_loc = None
+	clicked = None
+
+	screen.fill(WHITE)	
+
+	#button_size = (SCREEN_WIDTH/2-CELL_SIZE*2, SCREEN_HEIGHT/2, CELL_SIZE*5, CELL_SIZE*2) #x2 and x5 for button rect size
+	#pygame.draw.rect(screen, BLUE, button_size, 1)
+
+	button_text = FONT.render("Click anywhere to begin...", True, BLUE)
+	screen.blit(button_text, (SCREEN_WIDTH/2-180, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text
+
+	pygame.display.flip()
+
+	while not clicked: #mouse_loc:
+		for event in pygame.event.get(): #Event listener
+			if event.type == pygame.QUIT: #If "x" is clicked, program is clsoed
+				exit()
+
+			if event.type == pygame.MOUSEBUTTONUP:
+				clicked = True
+				#mouse_loc = pygame.mouse.get_pos() #Creates tuple of mouse loc on screen (x,y)
+	
+	screen.fill(WHITE)
+	button_text = FONT.render("3", True, BLUE)
+	screen.blit(button_text, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text
+	pygame.display.flip()
+	sleep(1)
+
+
+	screen.fill(WHITE)
+	button_text = FONT.render("2", True, BLUE)
+	screen.blit(button_text, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text	
+	pygame.display.flip()
+	sleep(1)
+
+	screen.fill(WHITE)	
+	button_text = FONT.render("1", True, BLUE)
+	screen.blit(button_text, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text
+	pygame.display.flip()
+	sleep(1)
+
+	return True
 
 def createGrid(screen):
 
@@ -157,7 +213,7 @@ def drawBoost1(screen, boost1_loc):
 
 	screen.blit(star_img, (boost1_loc))
 
-def updateHealth(screen, time_passed):
+def updateHealth(screen, time_passed, restart):
 
 	bar_length = 8.0 # Starting value - will decrease over time until food is eaten
 
@@ -170,7 +226,10 @@ def updateHealth(screen, time_passed):
 	pygame.draw.rect(screen, BLUE, bar_size, 0)
 
 	if time_passed >= bar_length:
-		gameOver(screen)
+		screen.fill(WHITE)
+		restart = gameOver(screen)
+
+	return restart
 
 def updateScore(screen, score_num):
 
@@ -184,17 +243,36 @@ def updateScore(screen, score_num):
 
 def gameOver(screen):
 
-	screen.fill(WHITE)
-	gameover_text = FONT.render("GAME OVER!", True, BLUE)
-	
-	screen.blit(gameover_text, (SCREEN_WIDTH/2+1, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text
+	screen.fill(WHITE)	
+
+	restart_button_size = (SCREEN_WIDTH/2-CELL_SIZE*3, SCREEN_HEIGHT/2, CELL_SIZE*5, CELL_SIZE*2) #x3 and x5 for button rect size
+	pygame.draw.rect(screen, BLUE, restart_button_size, 1) #Draw rectangle for button
+	restart_button = pygame.Rect(restart_button_size) #Store button object
+
+	restart_text = FONT.render("Restart", True, BLUE)
+	screen.blit(restart_text, (SCREEN_WIDTH/2-40, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text
 
 	pygame.display.flip()
 
-	sleep(3)
+	while True: #Pause until mouse
+		for event in pygame.event.get(): #Event listener
+			if event.type == pygame.QUIT: #If "x" is clicked, program is clsoed
+				exit()
+
+			if event.type == pygame.MOUSEBUTTONUP:
+				mouse_loc = pygame.mouse.get_pos() #Creates tuple of mouse loc on screen (x,y)
+
+				if restart_button.collidepoint(mouse_loc): #Checks if mouse click was in button
+					return True
+
+				else:
+					return False
+
+	#if exit_button.
+	#sleep(3)
 	
 	#mainMenu()
-	exit() 
+
 
 #===========================================================#
 #================== Code Execution begins ==================# 
@@ -219,7 +297,7 @@ BLUE = (0, 0, 255)
 
 FONT = pygame.font.SysFont('Arial', 24) #Size 24 b/c thats the size of images (looks good)
 
-FOOD_EAT_SPEED = 0.01 #Higher number = faster food meter depreciations
+FOOD_EAT_SPEED = 0.05 #Higher number = faster food meter depreciations
 FOOD_SCORE = 1
 STAR_SCORE = 5
 
