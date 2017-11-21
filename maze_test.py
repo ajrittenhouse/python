@@ -100,7 +100,7 @@ def createMaze(screen, grid, rows, cols):
 		area = (cell[0]*CELL_SIZE, cell[1]*CELL_SIZE, CELL_SIZE, CELL_SIZE) #Syntax (x, y locations, width, height of rect)
 		pygame.draw.rect(screen, BLUE, area, 0)
 	
-		pygame.display.flip()
+	pygame.display.flip()
 
 
 
