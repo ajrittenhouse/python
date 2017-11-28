@@ -5,9 +5,12 @@ from time import sleep
 def createWindow():
 
 	screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
-	pygame.display.set_caption("LIXOR")
+	pygame.display.set_caption("Lixor")
+	playGame(screen)
 
 #============= Default Values =============#
+
+def playGame(screen):
 
 	done = False
 
@@ -35,7 +38,6 @@ def createWindow():
 	cols = returns[2]
 
 	filled_cells = createMaze(grid)
-	#print(filled_cells)
 
 	filled_cells_pix = []
 
@@ -49,18 +51,17 @@ def createWindow():
 		moved = 0
 
 		drawGrid(screen, grid, filled_cells)
-		#drawMaze(screen, filled_cells)
 
 		if not menu_displayed:  
 			mainMenu(screen)
 			menu_displayed = True
 
 		if not food_loc: #Original item spaws
-			food_loc = spawnFood(screen) #Create and return food location
+			food_loc = spawnFood(screen, filled_cells_pix) #Create and return food location
 			drawFood(screen, food_loc)
 
 		if not boost1_loc:
-			boost1_loc = spawnBoost1(screen) #Create and return food location
+			boost1_loc = spawnBoost1(screen, filled_cells_pix) #Create and return food location
 			drawBoost1(screen, boost1_loc)
 
 		if not person_loc:
@@ -91,7 +92,7 @@ def createWindow():
 
 		if food_loc == person_loc: #If person loc and food loc are equal
 			screen.fill(WHITE)
-			food_loc = spawnFood(screen) #Create new food loc
+			food_loc = spawnFood(screen, filled_cells_pix) #Create new food loc
 			drawPerson(screen, person_loc)
 			time_passed = 0.0 #Reset food meter if food is eaten			
 			score_num += FOOD_SCORE #Increase score each time food is eaten
@@ -100,7 +101,7 @@ def createWindow():
 
 		if boost1_loc == person_loc: #If person loc and food loc are equal
 			screen.fill(WHITE)
-			boost1_loc = spawnBoost1(screen)
+			boost1_loc = spawnBoost1(screen, filled_cells_pix)
 			drawPerson(screen, person_loc)
 			score_num += STAR_SCORE #Increase score each time star is eaten
 			updateScore(screen, score_num)
@@ -112,7 +113,7 @@ def createWindow():
 
 		if restart == True:
 			menu_displayed = False
-				
+			break	
 
 #============= EVENT HANDLING =============#
 		
@@ -150,20 +151,18 @@ def drawMaze(screen, filled_cells): #not used right now
 		area = (cell[0]*CELL_SIZE, cell[1]*CELL_SIZE, CELL_SIZE, CELL_SIZE) #Syntax (x, y locations, width, height of rect)
 		pygame.draw.rect(screen, BLUE, area, 0)
 	
-	#pygame.display.flip()
-
 def mainMenu(screen):
 
-	#mouse_loc = None
+
 	clicked = None
 
-	screen.fill(WHITE)	
+	screen.fill(GREY)	
 
-	#button_size = (SCREEN_WIDTH/2-CELL_SIZE*2, SCREEN_HEIGHT/2, CELL_SIZE*5, CELL_SIZE*2) #x2 and x5 for button rect size
-	#pygame.draw.rect(screen, BLUE, button_size, 1)
+	button_text = FONT.render("Welcome to Lixor!", True, BLUE)
+	screen.blit(button_text, (SCREEN_WIDTH/2-100, SCREEN_HEIGHT/3)) 
 
 	button_text = FONT.render("Click anywhere to begin...", True, BLUE)
-	screen.blit(button_text, (SCREEN_WIDTH/2-100, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text
+	screen.blit(button_text, (SCREEN_WIDTH/2-120, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text
 
 	pygame.display.flip()
 
@@ -174,22 +173,21 @@ def mainMenu(screen):
 
 			if event.type == pygame.MOUSEBUTTONUP:
 				clicked = True
-				#mouse_loc = pygame.mouse.get_pos() #Creates tuple of mouse loc on screen (x,y)
 	
-	screen.fill(WHITE)
+	screen.fill(GREY)
 	button_text = FONT.render("3", True, BLUE)
 	screen.blit(button_text, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text
 	pygame.display.flip()
 	sleep(1)
 
 
-	screen.fill(WHITE)
+	screen.fill(GREY)
 	button_text = FONT.render("2", True, BLUE)
 	screen.blit(button_text, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text	
 	pygame.display.flip()
 	sleep(1)
 
-	screen.fill(WHITE)	
+	screen.fill(GREY)	
 	button_text = FONT.render("1", True, BLUE)
 	screen.blit(button_text, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text
 	pygame.display.flip()
@@ -249,23 +247,29 @@ def movePerson(screen, person_loc, food_loc, boost1_loc): #Add all other functio
 	drawFood(screen, food_loc)
 	drawBoost1(screen, boost1_loc)
 
-def spawnFood(screen):
+def spawnFood(screen, filled_cells_pix):
 
-	x = random.randrange(0, PLAY_AREA_WIDTH, CELL_SIZE)+3 #Could do this and other spawns through grid?
-	y = random.randrange(0, PLAY_AREA_HEIGHT, CELL_SIZE)+3 #ie. xy = random.randint(len(grid)) then x = grid[xy][0] y = grid[xy][1]
+	while True:
 
-	return (x, y)
+		x = random.randrange(0, PLAY_AREA_WIDTH, CELL_SIZE)+3 #Could do this and other spawns through grid?
+		y = random.randrange(0, PLAY_AREA_HEIGHT, CELL_SIZE)+3 #ie. xy = random.randint(len(grid)) then x = grid[xy][0] y = grid[xy][1]
+
+		if (x, y) in filled_cells_pix:
+			return (x, y)
 
 def drawFood(screen, food_loc):
 
 	screen.blit(food_img, (food_loc))
 
-def spawnBoost1(screen):
+def spawnBoost1(screen, filled_cells_pix):
 
-	x = random.randrange(0, PLAY_AREA_WIDTH, CELL_SIZE)+3
-	y = random.randrange(0, PLAY_AREA_HEIGHT, CELL_SIZE)+3
+	while True:
 
-	return (x, y)
+		x = random.randrange(0, PLAY_AREA_WIDTH, CELL_SIZE)+3
+		y = random.randrange(0, PLAY_AREA_HEIGHT, CELL_SIZE)+3
+
+		if (x, y) in filled_cells_pix:
+			return (x, y)
 
 def drawBoost1(screen, boost1_loc):
 
@@ -308,7 +312,7 @@ def gameOver(screen):
 	restart_button = pygame.Rect(restart_button_size) #Store button object
 
 	restart_text = FONT.render("Restart", True, BLUE)
-	screen.blit(restart_text, (SCREEN_WIDTH/2-40, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text
+	screen.blit(restart_text, (SCREEN_WIDTH/2-45, SCREEN_HEIGHT/2+10)) #"Centered", but not really. Needs adjusting to center text
 
 	pygame.display.flip()
 
@@ -325,12 +329,6 @@ def gameOver(screen):
 
 				else:
 					return False
-
-	#if exit_button.
-	#sleep(3)
-	
-	#mainMenu()
-
 
 #===========================================================#
 #================== Code Execution begins ==================# 
@@ -352,10 +350,11 @@ PLAY_AREA_HEIGHT = SCREEN_HEIGHT-CELL_SIZE
 
 WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
+GREY = (192, 192, 192)
 
 FONT = pygame.font.SysFont('Arial', 24) #Size 24 b/c thats the size of images (looks good)
 
-FOOD_EAT_SPEED = 0.001 #Higher number = faster food meter depreciations
+FOOD_EAT_SPEED = 0.01 #Higher number = faster food meter depreciations
 FOOD_SCORE = 1
 STAR_SCORE = 5
 
@@ -367,7 +366,9 @@ star_img = pygame.image.load('star.png')
 
 #========== INITIAL FUNCTION CALL ==========#
 
-window = createWindow() #Create the main window
+while True:
+
+	window = createWindow() #Create the main window
 
 quit()
 
