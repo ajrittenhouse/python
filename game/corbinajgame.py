@@ -28,14 +28,32 @@ def createWindow():
 	score_num = 0
 
 #============= Main Loop =============#
+	
+	returns = createGrid(screen) #Create the grid
+	grid = returns[0]
+	rows = returns[1]
+	cols = returns[2]
+
+	filled_cells = createMaze(grid)
+	#print(filled_cells)
+
+	filled_cells_pix = []
+
+	for cell in filled_cells:
+		filled_cells_pix.append((cell[0]*CELL_SIZE+3, cell[1]*CELL_SIZE+3))
+
+	direction = 5
 
 	while not done:
+
+		moved = 0
+
+		drawGrid(screen, grid, filled_cells)
+		#drawMaze(screen, filled_cells)
 
 		if not menu_displayed:  
 			mainMenu(screen)
 			menu_displayed = True
-
-		grid = createGrid(screen) #Create the grid
 
 		if not food_loc: #Original item spaws
 			food_loc = spawnFood(screen) #Create and return food location
@@ -54,7 +72,22 @@ def createWindow():
 		
 		person_loc = (x, y)
 
-		movePerson(screen, person_loc, food_loc, boost1_loc) #Orig. person spawn
+		if person_loc in filled_cells_pix:
+			movePerson(screen, person_loc, food_loc, boost1_loc) #Orig. person spawn
+			moved = 1
+
+		else:
+			if direction == 0:
+				loc_x += rows
+			if direction == 1:
+				loc_x -= rows
+			if direction == 2:
+				loc_y += 1
+			if direction == 3:
+				loc_y -= 1
+
+			x = grid[loc_x][0]*CELL_SIZE+3
+			y = grid[loc_y][1]*CELL_SIZE+3
 
 		if food_loc == person_loc: #If person loc and food loc are equal
 			screen.fill(WHITE)
@@ -82,24 +115,42 @@ def createWindow():
 				
 
 #============= EVENT HANDLING =============#
+		
 
 		for event in pygame.event.get(): #Event listener
+	
 			if event.type == pygame.QUIT: #If "x" is clicked, program is clsoed
 				done = True
 
-			if event.type == pygame.KEYDOWN: #Eventually add if conditions for walls
-				if event.key == pygame.K_LEFT:
-					if 1:	
-						loc_x -= CELL_SIZE
-				elif event.key == pygame.K_RIGHT:
-					if 1:
-						loc_x += CELL_SIZE					
-				elif event.key == pygame.K_UP:
-					if 1:
+			if moved == 1:	
+				if event.type == pygame.KEYDOWN: #If key is pressed
+					if event.key == pygame.K_LEFT:
+						loc_x -= rows
+						direction = 0
+					elif event.key == pygame.K_RIGHT:
+						loc_x += rows
+						direction = 1			
+					elif event.key == pygame.K_UP:
 						loc_y -= 1
-				elif event.key == pygame.K_DOWN:
-					if 1:
+						direction = 2
+					elif event.key == pygame.K_DOWN:
 						loc_y += 1
+						direction = 3
+
+def createMaze(grid):
+
+	div = float(CELL_SIZE)/(float(CELL_SIZE)-3)
+	filled_cells = random.sample(grid, int(len(grid)/div))
+
+	return filled_cells
+
+def drawMaze(screen, filled_cells): #not used right now
+
+	for cell in filled_cells: #Fill cells
+		area = (cell[0]*CELL_SIZE, cell[1]*CELL_SIZE, CELL_SIZE, CELL_SIZE) #Syntax (x, y locations, width, height of rect)
+		pygame.draw.rect(screen, BLUE, area, 0)
+	
+	#pygame.display.flip()
 
 def mainMenu(screen):
 
@@ -112,7 +163,7 @@ def mainMenu(screen):
 	#pygame.draw.rect(screen, BLUE, button_size, 1)
 
 	button_text = FONT.render("Click anywhere to begin...", True, BLUE)
-	screen.blit(button_text, (SCREEN_WIDTH/2-180, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text
+	screen.blit(button_text, (SCREEN_WIDTH/2-100, SCREEN_HEIGHT/2)) #"Centered", but not really. Needs adjusting to center text
 
 	pygame.display.flip()
 
@@ -150,27 +201,34 @@ def createGrid(screen):
 
 	grid = []
 
-	rows = int(PLAY_AREA_WIDTH/CELL_SIZE) #Determine the number of columns and rows in grid
-	cols = int(PLAY_AREA_HEIGHT/CELL_SIZE) 
+	cols = int(PLAY_AREA_WIDTH/CELL_SIZE) #Determine the number of columns and rows in grid
+	rows = int(PLAY_AREA_HEIGHT/CELL_SIZE) 
 
 	row = 0 #Used for creating cells
 	col = 0 
 
-	while row < rows: #Create each cell
-		while col < cols:
-			cell = (row, col)
+	while col < cols: #Create each cell
+		while row < rows:
+			cell = (col, row)
 			grid.append(cell)
-			col += 1
-		row += 1
-		col = 0
+			row += 1
+		col += 1
+		row = 0
 
-	for cell in grid: #Draw the grid
+	return (grid, rows, cols)
+
+def drawGrid(screen, grid, filled_cells):
+
+	for cell in filled_cells: #grid: #Draw the grid
 		area = (cell[0]*CELL_SIZE, cell[1]*CELL_SIZE, CELL_SIZE, CELL_SIZE) #Syntax (x, y locations, width, height of rect)
-		pygame.draw.rect(screen, BLUE, area, 1)
+		pygame.draw.rect(screen, WHITE, area, 1)
+
+	for cell in grid:
+		if cell not in filled_cells:
+			area = (cell[0]*CELL_SIZE, cell[1]*CELL_SIZE, CELL_SIZE, CELL_SIZE) #Syntax (x, y locations, width, height of rect)
+			pygame.draw.rect(screen, BLUE, area, 0)
 
 	pygame.display.flip()
-
-	return grid
 
 def spawnPerson(screen):
 
@@ -297,7 +355,7 @@ BLUE = (0, 0, 255)
 
 FONT = pygame.font.SysFont('Arial', 24) #Size 24 b/c thats the size of images (looks good)
 
-FOOD_EAT_SPEED = 0.05 #Higher number = faster food meter depreciations
+FOOD_EAT_SPEED = 0.001 #Higher number = faster food meter depreciations
 FOOD_SCORE = 1
 STAR_SCORE = 5
 
@@ -319,7 +377,7 @@ quit()
 #
 #	For walls, maybe check if x,y or person are in grid
 #
-#
+#	USE ROWS/COLS not CELL SIZE for mvmt
 #
 #
 #
